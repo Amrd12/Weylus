@@ -77,6 +77,20 @@ fn main() {
         }
     }
 
+    if conf.list_monitors {
+        let capturables = capturable::get_capturables(
+            #[cfg(target_os = "linux")]
+            conf.wayland_support,
+            #[cfg(target_os = "linux")]
+            false,
+        );
+        println!("Available monitors / capturables:");
+        for (i, c) in capturables.iter().enumerate() {
+            println!("  [{}] {}", i, c.name());
+        }
+        return;
+    }
+
     if conf.no_gui {
         let mut weylus = crate::weylus::Weylus::new();
         weylus.start(&conf, |msg| match msg {

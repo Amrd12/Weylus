@@ -163,7 +163,16 @@ async fn serve(
             let (response, fut) = upgrade::upgrade(&mut req).unwrap();
             num_clients.fetch_add(1, Ordering::Relaxed);
 
-            let config = context.weylus_client_config.clone();
+            let mut config = context.weylus_client_config.clone();
+            if let Some(query) = req.uri().query() {
+                use url::form_urlencoded;
+                let params = form_urlencoded::parse(query.as_bytes())
+                    .into_owned()
+                    .collect::<HashMap<String, String>>();
+                if let Some(m) = params.get("monitor") {
+                    config.monitor = Some(m.clone());
+                }
+            }
             tokio::spawn(async move {
                 match fut.await {
                     Ok(ws) => {

@@ -129,9 +129,14 @@ pub fn get_capturables(
         use crate::capturable::win_ctx::WinCtx;
         let winctx = WinCtx::new();
         for (i, o) in winctx.get_outputs().iter().enumerate() {
+            let name = if let Some(pos) = o.DeviceName.iter().position(|&c| c == 0) {
+                String::from_utf16_lossy(&o.DeviceName[..pos])
+            } else {
+                String::from_utf16_lossy(o.DeviceName.as_ref())
+            };
             let captr = CaptrsCapturable::new(
                 i as u8,
-                String::from_utf16_lossy(o.DeviceName.as_ref()),
+                name,
                 o.DesktopCoordinates,
                 winctx.get_union_rect().clone(),
             );
@@ -163,3 +168,40 @@ pub fn get_capturables(
 
     capturables
 }
+
+pub fn select_monitor(capturables: &mut Vec<Box<dyn Capturable>>, monitor: &str) {
+    let monitor = monitor.trim();
+    if capturables.is_empty() {
+        return;
+    }
+
+    if let Ok(index) = monitor.parse::<usize>() {
+        if index < capturables.len() {
+            let selected = capturables.remove(index);
+            capturables.insert(0, selected);
+            return;
+        } else {
+            warn!(
+                "Monitor index {} out of range (found {} capturables). Defaulting to monitor 0.",
+                index,
+                capturables.len()
+            );
+            return;
+        }
+    }
+
+    let monitor_lower = monitor.to_lowercase();
+    if let Some(pos) = capturables
+        .iter()
+        .position(|c| c.name().to_lowercase().contains(&monitor_lower))
+    {
+        let selected = capturables.remove(pos);
+        capturables.insert(0, selected);
+    } else {
+        warn!(
+            "Monitor '{}' not found among available capturables. Defaulting to monitor 0.",
+            monitor
+        );
+    }
+}
+

@@ -57,12 +57,13 @@ pub struct WeylusClientHandler<S, R, FnUInput> {
     video_thread: JoinHandle<()>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct WeylusClientConfig {
     pub encoder_options: EncoderOptions,
     #[cfg(target_os = "linux")]
     pub wayland_support: bool,
     pub no_gui: bool,
+    pub monitor: Option<String>,
 }
 
 impl<S, R, FnUInput> WeylusClientHandler<S, R, FnUInput> {
@@ -201,6 +202,9 @@ impl<S, R, FnUInput> WeylusClientHandler<S, R, FnUInput> {
             #[cfg(target_os = "linux")]
             self.capture_cursor,
         );
+        if let Some(ref monitor) = self.config.monitor {
+            crate::capturable::select_monitor(&mut self.capturables, monitor);
+        }
         self.capturables.iter().for_each(|c| {
             windows.push(c.name());
         });
@@ -212,6 +216,18 @@ impl<S, R, FnUInput> WeylusClientHandler<S, R, FnUInput> {
         S: WeylusSender,
         FnUInput: Fn(),
     {
+        if self.capturables.is_empty() {
+            self.capturables = get_capturables(
+                #[cfg(target_os = "linux")]
+                self.config.wayland_support,
+                #[cfg(target_os = "linux")]
+                self.capture_cursor,
+            );
+            if let Some(ref monitor) = self.config.monitor {
+                crate::capturable::select_monitor(&mut self.capturables, monitor);
+            }
+        }
+
         let client_name_changed = if self.client_name != config.client_name {
             self.client_name = config.client_name;
             true

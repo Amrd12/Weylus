@@ -114,6 +114,14 @@ pub struct Config {
     #[serde(default)]
     pub wayland_support: bool,
 
+    #[arg(long, help = "Select monitor to mirror by 0-based index or name.")]
+    #[serde(default)]
+    pub monitor: Option<String>,
+
+    #[arg(long, help = "Print available monitors and exit.")]
+    #[serde(skip)]
+    pub list_monitors: bool,
+
     #[arg(long, help = "Print template of index.html served by Weylus.")]
     #[serde(skip)]
     pub print_index_html: bool,

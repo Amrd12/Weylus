@@ -71,6 +71,7 @@ impl Weylus {
                 #[cfg(target_os = "linux")]
                 wayland_support: config.wayland_support,
                 no_gui: config.no_gui,
+                monitor: config.monitor.clone(),
             },
         );
 
